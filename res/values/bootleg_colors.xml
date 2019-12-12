@@ -12,4 +12,8 @@
 -->
 <resources>
     <color name="option_border_default">#5f6368</color>
+
+    <!-- Ambient lights-->
+    <color name="ambient_light_screen_color">#111111</color>
+    <color name="ambient_light_body_color">#323232</color>
 </resources>
