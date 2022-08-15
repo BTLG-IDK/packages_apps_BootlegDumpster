@@ -22,6 +22,12 @@
         android:key="cat_theming"
         android:title="@string/style_theming_cat_title">
 
+        <Preference
+            android:key="monet_engine"
+            android:title="@string/monet_engine_title"
+            android:summary="@string/monet_engine_summary"
+            android:fragment="com.bootleggers.dumpster.external.themebox.MonetSettings"/>
+
    </PreferenceCategory>
 
 </PreferenceScreen>
