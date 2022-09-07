@@ -201,7 +201,7 @@
        <item>2</item>
     </string-array>
 
-    <!-- Edge Lightning Notification -->
+    <!-- Edge lightning timeout -->
     <string-array name="ambient_notification_light_timeout_entries" translatable="false">
         <item>@string/ambient_notification_light_timeout_forever</item>
         <item>@string/ambient_notification_light_timeout_half_minute</item>

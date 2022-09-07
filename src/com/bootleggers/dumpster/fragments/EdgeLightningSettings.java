@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Yet Another AOSP Project
+ * Copyright (C) 2014 TeamEos
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.bootleggers.dumpster.fragments;
 
+import java.util.ArrayList;
+
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.ContentResolver;
-import android.content.res.Resources;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.UserHandle;
-import android.provider.Settings;
-import android.util.TypedValue;
-
 import androidx.preference.ListPreference;
+import androidx.preference.SwitchPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.Preference.OnPreferenceChangeListener;
+import android.provider.Settings;
 
+import com.android.settings.SettingsPreferenceFragment;
+import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto;
 import com.android.settings.R;
-import com.android.settings.SettingsPreferenceFragment;
 
-import com.bootleggers.support.colorpicker.ColorPickerPreference;
+import com.bootleggers.support.preferences.colorpicker.ColorPickerPreference;
 import com.bootleggers.support.preferences.CustomSeekBarPreference;
-import com.bootleggers.support.preferences.SystemSettingListPreference;
-import com.bootleggers.support.preferences.SystemSettingSwitchPreference;
-import com.bootleggers.dumpster.preferences.AmbientLightSettingsPreview;
 
-public class EdgeLightningSettings extends SettingsPreferenceFragment implements
-        Preference.OnPreferenceChangeListener {
+public class EdgeLightningSettings extends SettingsPreferenceFragment
+        implements OnPreferenceChangeListener {
 
     private static String KEY_DURATION = "ambient_notification_light_duration";
     private static String KEY_REPEATS = "ambient_notification_light_repeats";
@@ -48,14 +53,14 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
 
     private CustomSeekBarPreference mDurationPref;
     private CustomSeekBarPreference mRepeatsPref;
-    private SystemSettingListPreference mTimeoutPref;
-    private SystemSettingListPreference mColorModePref;
+    private ListPreference mTimeoutPref;
+    private ListPreference mColorModePref;
     private ColorPickerPreference mColorPref;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.settings_edge_lightning);
+    public void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+        addPreferencesFromResource(R.xml.bootleg_dumpster_frag_edge_lightning);
         final ContentResolver resolver = getContentResolver();
         final int accentColor = getAccentColor();
 
@@ -71,7 +76,7 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
         mRepeatsPref.setValue(repeats);
         mRepeatsPref.setOnPreferenceChangeListener(this);
 
-        mTimeoutPref = (SystemSettingListPreference) findPreference(KEY_TIMEOUT);
+        mTimeoutPref = (ListPreference) findPreference(KEY_TIMEOUT);
         value = Settings.System.getIntForUser(resolver,
                 KEY_TIMEOUT, accentColor, UserHandle.USER_CURRENT);
         mTimeoutPref.setValue(Integer.toString(value));
@@ -83,8 +88,7 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
         value = Settings.System.getIntForUser(resolver,
                 KEY_COLOR, accentColor, UserHandle.USER_CURRENT);
         mColorPref.setDefaultColor(accentColor);
-        AmbientLightSettingsPreview.setAmbientLightPreviewColor(value);
-        String colorHex = String.format("#%08x", (0xFFFFFFFF & value));
+        String colorHex = ColorPickerPreference.convertToRGB(value);
         if (value == accentColor) {
             mColorPref.setSummary(R.string.default_string);
         } else {
@@ -93,7 +97,7 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
         mColorPref.setNewPreviewColor(value);
         mColorPref.setOnPreferenceChangeListener(this);
 
-        mColorModePref = (SystemSettingListPreference) findPreference(KEY_COLOR_MODE);
+        mColorModePref = (ListPreference) findPreference(KEY_COLOR_MODE);
         value = Settings.System.getIntForUser(resolver,
                 KEY_COLOR_MODE, 0, UserHandle.USER_CURRENT);
         mColorModePref.setValue(Integer.toString(value));
@@ -103,12 +107,8 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
     }
 
     @Override
-    public int getMetricsCategory() {
-        return MetricsProto.MetricsEvent.BOOTLEG;
-    }
-
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-        final ContentResolver resolver = getContentResolver();
+        ContentResolver resolver = getActivity().getContentResolver();
         if (preference == mDurationPref) {
             int value = (Integer) newValue;
             Settings.System.putIntForUser(resolver,
@@ -137,14 +137,13 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
             return true;
         } else if (preference == mColorPref) {
             int accentColor = getAccentColor();
-            String hex = ColorPickerPreference.convertToARGB(
+            String colorHex = ColorPickerPreference.convertToRGB(value);
                     Integer.valueOf(String.valueOf(newValue)));
-            if (hex.equals(String.format("#%08x", (0xFFFFFFFF & accentColor)))) {
+            if (hex.equals("#3980ff")) {
                 preference.setSummary(R.string.default_string);
             } else {
                 preference.setSummary(hex);
             }
-            AmbientLightSettingsPreview.setAmbientLightPreviewColor(Integer.valueOf(String.valueOf(newValue)));
             int color = ColorPickerPreference.convertToColorInt(hex);
             Settings.System.putIntForUser(resolver,
                     KEY_COLOR, color, UserHandle.USER_CURRENT);
@@ -169,6 +168,10 @@ public class EdgeLightningSettings extends SettingsPreferenceFragment implements
         } else {
             mTimeoutPref.setSummary(R.string.set_to_zero);
             mTimeoutPref.setEnabled(false);
-        }
+    }
+
+    @Override
+    public int getMetricsCategory() {
+        return MetricsProto.MetricsEvent.BOOTLEG;
     }
 }

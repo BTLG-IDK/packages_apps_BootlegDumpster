@@ -28,8 +28,10 @@ public class NotificationsSettings extends SettingsPreferenceFragment
         implements OnPreferenceChangeListener {
 
     private static final String ALERT_SLIDER_PREF = "alert_slider_notifications";
+    private static final String KEY_EDGE_LIGHTNING = "pulse_ambient_light";
 
     private Preference mAlertSlider;
+    private SwitchPreference mEdgeLightning;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -47,15 +49,25 @@ public class NotificationsSettings extends SettingsPreferenceFragment
                 com.android.internal.R.bool.config_hasAlertSlider);
         if (!mAlertSliderAvailable)
             prefScreen.removePreference(mAlertSlider);
+
+        mEdgeLightning = (SwitchPreference)
+                findPreference(KEY_EDGE_LIGHTNING);
+        boolean enabled = Settings.System.getIntForUser(resolver,
+                KEY_EDGE_LIGHTNING, 0, UserHandle.USER_CURRENT) == 1;
+        mEdgeLightning.setChecked(enabled);
+        mEdgeLightning.setOnPreferenceChangeListener(this);
     }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         ContentResolver resolver = getActivity().getContentResolver();
-        switch (preference.getKey()) {
-            default:
-                return false;
+        if (preference == mEdgeLightning) {
+            boolean value = (Boolean) newValue;
+            Settings.System.putIntForUser(resolver, KEY_EDGE_LIGHTNING,
+                    value ? 1 : 0, UserHandle.USER_CURRENT);
+            return true;
         }
+        return false;
     }
 
     @Override
